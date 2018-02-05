@@ -116,7 +116,7 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
 
     @Override
     public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
-        float finalUnitHeight = bottom - top;
+        float finalUnitHeight = 2*bottom - top;
         float bgTop = bottom - finalUnitHeight;
         if (isClickable && isSelected && pressBgColor != 0) {
             // click background
@@ -216,11 +216,13 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
 
             int labelBgWidth = mSpecialLabelUnit.getLabelBgWidth();
             mSpecialTextWidth = paint.measureText(mSpecialText, 0, mSpecialText.length());
-            if (labelBgWidth > 0 && labelBgWidth > mSpecialTextWidth) {
-                mFinalWidth = labelBgWidth;
-            } else {
-                mFinalWidth = mSpecialTextWidth + mPaddingLeft + mPaddingRight;
-            }
+//            if (labelBgWidth > 0 && labelBgWidth > mSpecialTextWidth) {
+//                mFinalWidth = labelBgWidth;
+//            } else {
+//                mFinalWidth = mSpecialTextWidth + mPaddingLeft + mPaddingRight;
+//            }
+
+            mFinalWidth = labelBgWidth;
         }
 
         return mFinalWidth;
@@ -244,12 +246,12 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
             mSpecialTextHeight = specialTextRect.height();
             mSpecialTextBaselineOffset = specialTextRect.bottom;
 
-            if (labelBgHeight > 0 && labelBgHeight > mSpecialTextHeight && labelBgHeight <= mLineTextHeight) {
-                mFinalHeight = labelBgHeight;
-            } else {
-                mFinalHeight = mSpecialTextHeight + mPaddingTop + mPaddingBottom;
-            }
-
+//            if (labelBgHeight > 0 && labelBgHeight > mSpecialTextHeight && labelBgHeight <= mLineTextHeight) {
+//                mFinalHeight = labelBgHeight;
+//            } else {
+//                mFinalHeight = mSpecialTextHeight + mPaddingTop + mPaddingBottom;
+//            }
+            mFinalHeight = labelBgHeight;
             if (mFinalHeight > mLineTextHeight) {
                 mFinalHeight = mLineTextHeight;
             }
