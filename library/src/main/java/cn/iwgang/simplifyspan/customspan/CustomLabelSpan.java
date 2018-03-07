@@ -45,11 +45,11 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
     private int pressBgColor;
 
     public CustomLabelSpan(String normalSizeText, SpecialLabelUnit specialLabelUnit) {
-        mSpecialLabelUnit = specialLabelUnit;
+        this.mSpecialLabelUnit = specialLabelUnit;
         mSpecialText = mSpecialLabelUnit.getText();
-        mNormalSizeText = normalSizeText;
-        isClickable = mSpecialLabelUnit.isClickable();
-        mBgColor = mSpecialLabelUnit.getBgColor();
+        this.mNormalSizeText = normalSizeText;
+        this.isClickable = mSpecialLabelUnit.isClickable();
+        this.mBgColor = mSpecialLabelUnit.getBgColor();
 
         mBitmap = mSpecialLabelUnit.getBitmap();
         if (null == mBitmap) {
@@ -110,13 +110,20 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
                 }
             }
         }
-
+        //修复上下padding不生效，修复normalSizeText为空导致高度为0，draw不调用的问题
+        Paint.FontMetricsInt metrics = paint.getFontMetricsInt();
+        if (fm != null) {
+            fm.top = metrics.top - mPaddingTop;
+            fm.ascent = metrics.ascent - mPaddingBottom;
+            fm.descent = metrics.descent + mPaddingTop;
+            fm.bottom = metrics.bottom + mPaddingBottom;
+        }
         return Math.round(mFinalWidth);
     }
 
     @Override
     public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
-        float finalUnitHeight = 2*bottom - top;
+        float finalUnitHeight = bottom - top;
         float bgTop = bottom - finalUnitHeight;
         if (isClickable && isSelected && pressBgColor != 0) {
             // click background
@@ -216,13 +223,11 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
 
             int labelBgWidth = mSpecialLabelUnit.getLabelBgWidth();
             mSpecialTextWidth = paint.measureText(mSpecialText, 0, mSpecialText.length());
-//            if (labelBgWidth > 0 && labelBgWidth > mSpecialTextWidth) {
-//                mFinalWidth = labelBgWidth;
-//            } else {
-//                mFinalWidth = mSpecialTextWidth + mPaddingLeft + mPaddingRight;
-//            }
-
-            mFinalWidth = labelBgWidth;
+            if (labelBgWidth > 0 && labelBgWidth > mSpecialTextWidth) {
+                mFinalWidth = labelBgWidth;
+            } else {
+                mFinalWidth = mSpecialTextWidth + mPaddingLeft + mPaddingRight;
+            }
         }
 
         return mFinalWidth;
@@ -232,26 +237,35 @@ public class CustomLabelSpan extends ReplacementSpan implements OnClickStateChan
         if (mFinalHeight <= 0) {
             int labelBgHeight = mSpecialLabelUnit.getLabelBgHeight();
 
-            Rect specialTextRect = new Rect();
-            paint.getTextBounds(mNormalSizeText, 0, mNormalSizeText.length(), specialTextRect);
-            mLineTextHeight = specialTextRect.height();
-            mLineTextBaselineOffset = specialTextRect.bottom;
-
             float labelTextSize = mSpecialLabelUnit.getLabelTextSize();
             if (labelTextSize > 0 && labelTextSize != paint.getTextSize()) {
                 paint.setTextSize(labelTextSize);
             }
 
+            Rect specialTextRect = new Rect();
+            paint.getTextBounds(mNormalSizeText, 0, mNormalSizeText.length(), specialTextRect);
+            //修复当高度为固定值时由于padding为0导致高度为自适应而非预设高度
+            if (labelBgHeight > 0){
+                mPaddingBottom = (labelBgHeight - specialTextRect.bottom + specialTextRect.top) / 2;
+                mPaddingTop = mPaddingBottom;
+            }
+            specialTextRect.bottom += mPaddingBottom;
+            specialTextRect.top -= mPaddingBottom;
+            mLineTextHeight = specialTextRect.height();
+            mLineTextBaselineOffset = specialTextRect.bottom;
+
             paint.getTextBounds(mSpecialText, 0, mSpecialText.length(), specialTextRect);
+            specialTextRect.bottom += mPaddingBottom;
+            specialTextRect.top -= mPaddingBottom;
             mSpecialTextHeight = specialTextRect.height();
             mSpecialTextBaselineOffset = specialTextRect.bottom;
 
-//            if (labelBgHeight > 0 && labelBgHeight > mSpecialTextHeight && labelBgHeight <= mLineTextHeight) {
-//                mFinalHeight = labelBgHeight;
-//            } else {
-//                mFinalHeight = mSpecialTextHeight + mPaddingTop + mPaddingBottom;
-//            }
-            mFinalHeight = labelBgHeight;
+            if (labelBgHeight > 0 && labelBgHeight > mSpecialTextHeight && labelBgHeight <= mLineTextHeight) {
+                mFinalHeight = labelBgHeight;
+            } else {
+                mFinalHeight = mSpecialTextHeight + mPaddingTop + mPaddingBottom;
+            }
+
             if (mFinalHeight > mLineTextHeight) {
                 mFinalHeight = mLineTextHeight;
             }
